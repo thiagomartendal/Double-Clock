@@ -1,41 +1,39 @@
 #include <stdio.h>
 #include "clock.h"
 
-// Inserção das páginas no relógio
-void inserirPaginas(Clock *clock) {
-  Pagina pag0 = {0, false};
-  Pagina pag1 = {1, false};
-  Pagina pag2 = {2, true};
-  Pagina pag3 = {3, false};
-  Pagina pag4 = {4, true};
-  Pagina pag5 = {5, true};
-  inserirPagina(clock, pag0);
-  inserirPagina(clock, pag1);
-  inserirPagina(clock, pag2);
-  inserirPagina(clock, pag3);
-  inserirPagina(clock, pag4);
-  inserirPagina(clock, pag5);
-}
-
-// Exibe as páginas no relógio
-void exibir(Clock clock) {
-  for (int i = 0; i < clock.buffer.tamanho; i++) {
-    Pagina pag = clock.buffer.paginas[i];
-    printf("Página: %d - Bit R: %d\n", pag.numero, pag.bitR);
+void exibir(Clock c) {
+  for (int i = 0; i < c.paginasInseridas; i++) {
+    printf("Página: {%d, %d}\n", c.paginas[i].numero, c.paginas[i].bitR);
   }
 }
 
+void teste() {
+  int totalMoldurasPagina = 8;
+  Pagina pag5 = {5, 1};
+  Pagina pag12 = {12, 1};
+  Pagina pag97 = {97, 0};
+  Pagina pag9 = {9, 1};
+  Pagina pag31 = {31, 0};
+  Pagina pag65 = {65, 0};
+  Pagina pag49 = {49, 1};
+  Pagina pag3 = {3, 1};
+  Pagina pag58 = {58, 1};
+  Clock c1;
+  iniciar(&c1, totalMoldurasPagina);
+  inserirPagina(&c1, pag5);
+  inserirPagina(&c1, pag12);
+  inserirPagina(&c1, pag97);
+  inserirPagina(&c1, pag9);
+  inserirPagina(&c1, pag31);
+  inserirPagina(&c1, pag65);
+  inserirPagina(&c1, pag49);
+  inserirPagina(&c1, pag3);
+  inserirPagina(&c1, pag58);
+  exibir(c1);
+  free(c1.paginas);
+}
+
 int main() {
-  printf("Relógio com 6 páginas\n");
-  Clock clock;
-  iniciar(&clock, 6);
-  inserirPaginas(&clock);
-  exibir(clock);
-  printf("----------------\n");
-  // Insere uma página além da capacidade
-  printf("Relógio com uma página a mais\n");
-  Pagina pag6 = {6, true};
-  inserirPagina(&clock, pag6);
-  exibir(clock);
+  teste();
   return 0;
 }
