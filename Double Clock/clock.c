@@ -1,125 +1,80 @@
 #include "clock.h"
 
-// Prepara o relógio para receber as páginas de memória
-void iniciarClock1(Clock1 *clock, int totalPaginas) {
-  clock->ponteiro = 0;
-  clock->totalPaginas = totalPaginas;
-  clock->buffer.paginas = malloc(totalPaginas*sizeof(Pagina));
-  clock->buffer.tamanho = 0;
+void iniciar(Clock *C1, Clock *C2, int tamanhoMoldura) {
+  C1->ponteiro = 0;
+  C1->totalPaginas = tamanhoMoldura;
+  C1->paginasInseridas = 0;
+  C1->paginas = malloc(tamanhoMoldura*sizeof(Pagina));
+  C2->ponteiro = 0;
+  C2->totalPaginas = tamanhoMoldura;
+  C2->paginasInseridas = 0;
+  C2->paginas = malloc(tamanhoMoldura*sizeof(Pagina));
 }
 
-void iniciarClock2(Clock2 *clock, int totalPaginas) {
-  clock->ponteiro = 0;
-  clock->totalPaginas = totalPaginas;
-  clock->buffer.paginas = malloc(totalPaginas*sizeof(Pagina));
-  clock->buffer.tamanho = 0;
-}
-
-// Insere uma página no relógio 1
-// void inserirPaginaClock1(Clock1 *clock, Pagina pagina) {
-//   Buffer *buffer = &clock->buffer;
-//   if (buffer->tamanho == clock->totalPaginas) { // Se o buffer estiver cheio o relógio movimenta-rá o ponteiro para remover uma página com bit 0 e adicionar a nova página
-//     for (int i = 0; i < buffer->tamanho; i++) {
-//       Pagina *pag = &buffer->paginas[i];
-//       if (pag->bitR) { // Se o bit for 1 atualiza o bit para 0 e avança o ponteiro
-//         pag->bitR = false;
-//         avancarPonteiro(clock);
-//         if (i == clock->totalPaginas-1) { // Se a ultima página no relógio for 1, atualiza o indice i para percorrer o relógio novamente
-//           i = -1;
-//         }
-//       } else { // Se o bit for 0 remove a página antiga da posição e adiciona a página nova em seu lugar
-//         buffer->paginas[i] = pagina;
-//         avancarPonteiro(clock);
-//         break;
-//       }
-//     }
-//   } else { // Se o buffer ainda não está cheio adiciona a página
-//     inserir(buffer, pagina);
-//   }
-// }
-
-// Insere uma página no relógio 2
-void inserirPaginaClock2(Clock1 *clock1, Clock2 *clock2, Pagina pagina) {
-  Buffer *buffer1 = &clock1->buffer;
-  Buffer *buffer2 = &clock2->buffer;
-  if (buffer2->tamanho == clock2->totalPaginas) { // Se o buffer estiver cheio o relógio movimenta-rá o ponteiro para remover uma página com bit 0 e adicionar a nova página
-    for (int i = 0; i < buffer2->tamanho; i++) {
-      Pagina *pag = &buffer2->paginas[i];
-      if (pag->bitR) { // Se o bit for 1 atualiza o bit para 0 e avança o ponteiro
-        pag->bitR = false;
-        avancarPonteiro(clock2);
-        if (i == clock2->totalPaginas-1) { // Se a ultima página no relógio for 1, atualiza o indice i para percorrer o relógio novamente
-          i = -1;
-        }
-      } else { // Se o bit for 0 remove a página antiga da posição e adiciona a página nova em seu lugar
-        buffer2->paginas[i] = pagina;
-        int pos = 0;
-        if (clock1->ponteiro == 0) {
-          pos = buffer1->tamanho-1;
-        } else {
-          pos = clock1->ponteiro-1;
-        }
-        buffer1->paginas[pos] = pagina;
-        avancarPonteiro(clock2);
-        break;
+void inserirPagina(Clock *C1, Clock *C2, Pagina pagina) {
+  if (C1->paginasInseridas < C1->totalPaginas) { // Passo 1
+    C1->paginas[C1->paginasInseridas] = pagina;
+    C1->paginasInseridas++;
+  } else { // Passo 2
+    Pagina *paginaPonteiro = &C1->paginas[C1->ponteiro];
+    int passo2ai = 0;
+    if ((paginaPonteiro->bitR == 0) && (paginaPonteiro->bitM == 0)) { // Passo 2-a-i
+      C1->paginas[C1->ponteiro] = pagina;
+      avancarPonteiro(C1);
+      passo2ai = 1;
+    } else if ((paginaPonteiro->bitR == 1) && (paginaPonteiro->bitM == 0)) { // Passo 2-1-ii
+      paginaPonteiro->bitR = 0;
+      avancarPonteiro(C1);
+      inserirPagina(C1, C2, pagina);
+    } else if (paginaPonteiro->bitM == 1) { // Passo 2-a-iii
+      if (paginaPonteiro->bitR == 1) {
+        paginaPonteiro->bitR = 0;
+      }
+      C2->paginas[C2->paginasInseridas] = *paginaPonteiro;
+      C2->paginasInseridas++;
+      removerPagina(C1, C1->ponteiro);
+      avancarPonteiro(C1);
+      inserirPagina(C1, C2, pagina);
+    }
+    if (C1->ponteiro == C1->totalPaginas-1) { // Passo 2b
+      if (passo2ai == 0) { // O passo 2b só é executado caso o passo 2-a-i não tenha sido executado
+        clockClassico(C1, C2, pagina);
+      } else {
+        passo2ai = 0;
       }
     }
-  } else { // Se o buffer ainda não está cheio adiciona a página
-    inserir(buffer2, pagina);
   }
 }
 
-void inserirPagina(Clock1 *clock1, Clock2 *clock2, Pagina pagina) {
-  Buffer *buffer1 = &clock1->buffer;
-  if (buffer1->tamanho == clock1->totalPaginas) { // Se o buffer estiver cheio o relógio movimenta-rá o ponteiro para remover uma página com bit 0 e adicionar a nova página
-    for (int i = 0; i < buffer1->tamanho; i++) {
-      Pagina *pag = &buffer1->paginas[i];
-      if (!pag->bitR && !pag->bitM) {
-        buffer1->paginas[i] = pagina;
-        avancarPonteiro(clock1);
-        break;
-      } else if (pag->bitR && !pag->bitM) {
-        pag->bitR = false;
-        avancarPonteiro(clock1);
-        if (i == clock1->totalPaginas-1) { // Se a ultima página no relógio for 1, atualiza o indice i para percorrer o relógio novamente
-          i = -1;
-        }
-      } else if (pag->bitM) {
-        Pagina p;
-        p.paginaVazia = true;
-        buffer1->paginas[i] = p;
-        inserirPaginaClock2(clock1, clock2, *pag);
-        // inserirPaginaClock2(clock1, clock2, pagina);
-        avancarPonteiro(clock1);
-        // break;
+void removerPagina(Clock *C1, int pos) { // Remove uma página da posição do array de páginas
+  for(int i = pos; i < C1->paginasInseridas-1; i++) C1->paginas[i] = C1->paginas[i+1];
+  C1->paginasInseridas--;
+}
+
+void clockClassico(Clock *clock1, Clock *clock2, Pagina pagina) { // Algoritmo clássico do relógio
+  if (clock2->paginasInseridas < clock2->totalPaginas) { // Insere páginas enquanto o relógio tem espaço
+    clock2->paginas[clock2->paginasInseridas] = pagina;
+    clock2->paginasInseridas++;
+  } else { // Quando o relógio não tem mais espaço
+    Pagina *paginaPonteiro = &clock2->paginas[clock2->ponteiro]; // Avalia a página do ponteiro
+    if (paginaPonteiro->bitR == 1) { // Se o bit R == 1 seta para 0
+      paginaPonteiro->bitR = 0;
+      avancarPonteiro(clock2);
+      clockClassico(clock1, clock2, pagina);
+    } else if (paginaPonteiro->bitR == 0) { // Se o bit R == 0 substitui a página do ponteiro
+      clock2->paginas[clock2->ponteiro] = pagina;
+      // Quando ocorre uma substituição de página no relógio 2, a nova página é inserida em uma posição após o ponteiro do relógio 1
+      if (clock1->ponteiro == clock1->totalPaginas-1) {
+        clock1->paginas[0] = pagina;
+      } else {
+        clock1->paginas[clock1->ponteiro+1] = pagina;
       }
-      if (i == buffer1->tamanho-1) {
-        inserirPaginaClock2(clock1, clock2, *pag);
-      }
+      avancarPonteiro(clock2);
     }
-  } else { // Se o buffer ainda não está cheio adiciona a página
-    inserir(buffer1, pagina);
   }
 }
 
-// void inserirPagina(Clock1 *clock1, Clock2 *clock2, Pagina pagina) {
-//   Buffer *buffer1 = &clock1->buffer;
-//   if (buffer1->tamanho < clock1->totalPaginas) {
-//     inserirPaginaClock1(clock1, pagina);
-//   } else {
-//     Pagina *pagClock1 = &buffer1->paginas[clock1->ponteiro];
-//     if ((pagClock1->bitR == false) && (pagClock1->bitM == false)) {
-//
-//     } else if ((pagClock1->bitR == true) && (pagClock1->bitM == false)) {
-//
-//     } else if (pagClock1->bitM == true) {
-//
-//     }
-//   }
-// }
-
-// Método que controla o avanço do ponteiro
-void avancarPonteiro(Clock1 *clock) {
+void avancarPonteiro(Clock *clock) {
   if (clock->ponteiro == clock->totalPaginas-1) { // Se o ponteiro for igual ao total de páginas-1 retorna para a posição inicial do relógio, realizando a circularidade
     clock->ponteiro = 0;
   } else { // Se não o ponteiro é incrementado

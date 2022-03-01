@@ -1,53 +1,49 @@
 #include <stdio.h>
 #include "clock.h"
 
-// Inserção das páginas no relógio
-void inserirPaginas(Clock1 *clock1, Clock2 *clock2) {
-  Pagina pag0 = {0, false, true};
-  Pagina pag1 = {1, false, true};
-  Pagina pag2 = {2, true, false};
-  Pagina pag3 = {3, false, true};
-  Pagina pag4 = {4, true, true};
-  Pagina pag5 = {5, true, false};
-  inserirPagina(clock1, clock2, pag0);
-  inserirPagina(clock1, clock2, pag1);
-  inserirPagina(clock1, clock2, pag2);
-  inserirPagina(clock1, clock2, pag3);
-  inserirPagina(clock1, clock2, pag4);
-  inserirPagina(clock1, clock2, pag5);
+void exibir(Clock c) {
+  for (int i = 0; i < c.paginasInseridas; i++) {
+    printf("Página: {%d, %d, %d}\n", c.paginas[i].numero, c.paginas[i].bitR, c.paginas[i].bitM);
+  }
 }
 
-// Exibe as páginas no relógio
-void exibir(Clock1 clock1, Clock2 clock2) {
-  printf("Clock 1\n");
-  for (int i = 0; i < clock1.buffer.tamanho; i++) {
-    Pagina pag = clock1.buffer.paginas[i];
-    if (pag.paginaVazia) {
-      printf("Página: ? - Bit R: ? - Bit M: ?\n");
-    } else {
-      printf("Página: %d - Bit R: %d - Bit M: %d\n", pag.numero, pag.bitR, pag.bitM);
-    }
-  }
-  printf("Clock 2\n");
-  for (int i = 0; i < clock2.buffer.tamanho; i++) {
-    Pagina pag = clock2.buffer.paginas[i];
-    printf("Página: %d - Bit R: %d - Bit M: %d\n", pag.numero, pag.bitR, pag.bitM);
-  }
+void teste() {
+  int totalMoldurasPagina = 8;
+  Pagina pag5 = {5, 1, 0};
+  Pagina pag12 = {12, 1, 1};
+  Pagina pag97 = {97, 1, 0};
+  Pagina pag9 = {9, 0, 0};
+  Pagina pag31 = {31, 1, 0};
+  Pagina pag65 = {65, 1, 1};
+  Pagina pag49 = {49, 0, 0};
+  Pagina pag3 = {3, 0, 0};
+  Pagina pag25 = {25, 0, 1};
+  Pagina pag77 = {77, 1, 1};
+  Pagina pag18 = {18, 0, 1};
+  Pagina pag83 = {83, 0, 1};
+  Clock c1;
+  Clock c2;
+  iniciar(&c1, &c2, totalMoldurasPagina);
+  inserirPagina(&c1, &c2, pag5);
+  inserirPagina(&c1, &c2, pag25);
+  inserirPagina(&c1, &c2, pag97);
+  inserirPagina(&c1, &c2, pag77);
+  inserirPagina(&c1, &c2, pag31);
+  inserirPagina(&c1, &c2, pag18);
+  inserirPagina(&c1, &c2, pag49);
+  inserirPagina(&c1, &c2, pag83);
+  inserirPagina(&c1, &c2, pag12);
+  inserirPagina(&c1, &c2, pag9);
+  inserirPagina(&c1, &c2, pag65);
+  inserirPagina(&c1, &c2, pag3);
+  exibir(c1);
+  printf("------------\n");
+  exibir(c2);
+  free(c1.paginas);
+  free(c2.paginas);
 }
 
 int main() {
-  printf("Relógio com 6 páginas\n");
-  Clock1 clock1;
-  Clock2 clock2;
-  iniciarClock1(&clock1, 6);
-  iniciarClock2(&clock2, 4);
-  inserirPaginas(&clock1, &clock2);
-  exibir(clock1, clock2);
-  printf("----------------\n");
-  // Insere uma página além da capacidade
-  printf("Relógio com uma página a mais\n");
-  Pagina pag6 = {6, true};
-  inserirPagina(&clock1, &clock2, pag6);
-  exibir(clock1, clock2);
+  teste();
   return 0;
 }
